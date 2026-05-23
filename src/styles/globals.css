@@ -1,0 +1,138 @@
+@import "tailwindcss";
+
+:root {
+  --accent: #4facfe;
+  --accent-2: #a855f7;
+  --accent-3: #f472b6;
+  --bg-primary: #0d0f1a;
+  --bg-card: #141727;
+  --bg-sidebar: #0a0c17;
+  --text-primary: #f1f5f9;
+  --text-muted: #64748b;
+  --border: rgba(255, 255, 255, 0.07);
+  --font-scale: 1;
+}
+
+.light-mode {
+  --bg-primary: #f4f6ff;
+  --bg-card: #ffffff;
+  --bg-sidebar: #eceffe;
+  --text-primary: #1e1b4b;
+  --text-muted: #6b7280;
+  --border: rgba(0, 0, 0, 0.08);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--accent);
+  border-radius: 3px;
+}
+
+body {
+  margin: 0;
+  font-family: "DM Sans", system-ui, sans-serif;
+  font-size: calc(1rem * var(--font-scale));
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background 0.3s, color 0.3s;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.font-heading {
+  font-family: "Outfit", system-ui, sans-serif;
+}
+
+@keyframes marquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+.marquee-wrap {
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.marquee-text {
+  display: inline-block;
+  padding-right: 2rem;
+}
+
+.marquee-text.animate {
+  animation: marquee 6s linear infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--bg-card) 25%,
+    rgba(255, 255, 255, 0.08) 50%,
+    var(--bg-card) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+.card-glow {
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.card-glow:hover {
+  transform: scale(1.01);
+  box-shadow: 0 8px 32px color-mix(in srgb, var(--accent) 25%, transparent);
+}
+
+.btn-accent {
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  color: white;
+}
+
+.bg-app {
+  background: var(--bg-primary);
+}
+
+.bg-card {
+  background: var(--bg-card);
+}
+
+.bg-sidebar {
+  background: var(--bg-sidebar);
+}
+
+.text-app {
+  color: var(--text-primary);
+}
+
+.text-muted {
+  color: var(--text-muted);
+}
+
+.border-app {
+  border-color: var(--border);
+}
