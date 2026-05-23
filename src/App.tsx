@@ -1,6 +1,8 @@
+import { GoogleOAuthProvider } from '@react-oauth/google'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useEffect } from 'react'
 import { Route, Routes, useLocation } from 'react-router-dom'
+import { isGoogleClientConfigured } from './utils/googleAuth'
 import { Calculator } from './components/Calculator'
 import { SettingsDrawer } from './components/SettingsDrawer'
 import { Sidebar } from './components/Sidebar'
@@ -86,11 +88,19 @@ export default function App() {
     // Logged-in session is restored automatically in UserProvider via loadUser()
   }, [])
 
-  return (
+  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID ?? ''
+
+  const app = (
     <ThemeProvider>
       <UserProvider>
         <AppShell />
       </UserProvider>
     </ThemeProvider>
   )
+
+  if (isGoogleClientConfigured()) {
+    return <GoogleOAuthProvider clientId={googleClientId}>{app}</GoogleOAuthProvider>
+  }
+
+  return app
 }

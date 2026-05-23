@@ -1,5 +1,5 @@
-import { useGoogleLogin } from '@react-oauth/google'
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
+import { GoogleOAuthBridge } from '../components/GoogleOAuthBridge'
 import {
   DEFAULT_SETTINGS,
   DEFAULT_USER,
@@ -88,25 +88,19 @@ export function UserProvider({ children }: { children: ReactNode }) {
     [setUser, showToast]
   )
 
-  const googleLogin = useGoogleLogin({
-    flow: 'implicit',
-    onSuccess: (tokenResponse) => {
-      if (tokenResponse.access_token) {
-        completeGoogleLogin(tokenResponse.access_token)
-      } else {
-        showToast('Login failed. Please try again.')
-      }
-    },
-    onError: () => showToast('Login cancelled'),
-  })
+  const googleLoginRef = useRef<(() => void) | null>(null)
 
   const signInWithGoogle = useCallback(() => {
     if (!isGoogleClientConfigured()) {
       showToast('Google login not configured. Please add your Client ID.')
       return
     }
-    googleLogin()
-  }, [googleLogin, showToast])
+    if (!googleLoginRef.current) {
+      showToast('Google login not configured. Please add your Client ID.')
+      return
+    }
+    googleLoginRef.current()
+  }, [showToast])
 
   const signOut = useCallback(() => {
     clearUser()
@@ -219,6 +213,15 @@ export function UserProvider({ children }: { children: ReactNode }) {
         refreshWeather,
       }}
     >
+      {isGoogleClientConfigured() && (
+        <GoogleOAuthBridge
+          onRegister={(fn) => {
+            googleLoginRef.current = fn
+          }}
+          onAccessToken={completeGoogleLogin}
+          onCancel={() => showToast('Login cancelled')}
+        />
+      )}
       {children}
     </UserContext.Provider>
   )
