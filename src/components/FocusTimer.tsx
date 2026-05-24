@@ -125,7 +125,7 @@ export function FocusTimer() {
             cy={size / 2}
             r={r}
             fill="none"
-            stroke="rgba(255,255,255,0.08)"
+           stroke="rgba(0,0,0,0.08)"
             strokeWidth={stroke}
           />
           <circle
@@ -150,12 +150,7 @@ export function FocusTimer() {
         <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-3xl font-bold text-app">
           {timer.formatTime()}
         </span>
-        <motion.div
-          className="absolute h-3 w-3 rounded-full shadow-lg"
-          style={{
-          background: 'var(--accent)',
-           }} 
-        />
+        
       </div>
 
       <div className="mt-6 flex gap-3">

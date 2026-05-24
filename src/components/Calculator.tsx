@@ -116,6 +116,17 @@ export function Calculator() {
       setExpression((e) => e + 'e')
       return
     }
+    if (key === '°') {
+  setExpression((e) => {
+    const num = parseFloat(e)
+    if (!isNaN(num)) {
+      const rad = (num * Math.PI) / 180
+      return String(rad)
+    }
+    return e
+  })
+  return
+}
     setExpression((e) => e + key)
   }
 
@@ -160,7 +171,7 @@ export function Calculator() {
   ]
 
   const sciKeys = [
-    ['sin', 'cos', 'tan', 'DEG'],
+    ['sin', 'cos', 'tan', '°'],
     ['sin⁻¹', 'cos⁻¹', 'tan⁻¹', '√('],
     ['∛(', 'x^', 'log(', 'ln('],
     ['eˣ', 'π', 'e', '('],
