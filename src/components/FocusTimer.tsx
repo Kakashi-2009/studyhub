@@ -133,7 +133,7 @@ export function FocusTimer() {
             strokeLinecap="round"
             strokeDasharray={circumference}
             strokeDashoffset={offset}
-            className="transition-all duration-1000"
+            className="transition-[stroke-dashoffset] duration-100 ease-linear"
           />
           <defs>
             <linearGradient id="timerGrad" x1="0%" y1="0%" x2="100%" y2="0%">
