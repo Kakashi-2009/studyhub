@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { Maximize2, X } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   Area,
   AreaChart,
@@ -10,8 +10,8 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import { useUser } from '../context/UserContext'
-import type { DayData, ProgressRange } from '../types'
+import { getLast7DaysProgress } from '../utils/progressStorage'
+import type { ProgressRange } from '../types'
 
 const COLORS = { theory: '#4FACFE', practice: '#A855F7', lexicon: '#F472B6' }
 
@@ -32,70 +32,91 @@ function CustomTooltip({ active, payload, label }: { active?: boolean; payload?:
   )
 }
 
-function ChartBody({ data, height }: { data: DayData[]; height: number }) {
+function ChartBody({ data, height }: { data: { day: string; theory: number; practice: number; lexicon: number }[]; height: number }) {
   return (
-  <div>
-    <ResponsiveContainer width="100%" height={height}>
-      <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-        <defs>
-          {(['theory', 'practice', 'lexicon'] as const).map((key) => (
-            <linearGradient key={key} id={`grad-${key}`} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={COLORS[key]} stopOpacity={0.5} />
-              <stop offset="100%" stopColor={COLORS[key]} stopOpacity={0} />
-            </linearGradient>
-          ))}
-        </defs>
-        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-        <XAxis dataKey="day" tick={{ fill: '#64748B', fontSize: 12 }} axisLine={false} tickLine={false} />
-        <YAxis domain={[0, 100]} tick={{ fill: '#64748B', fontSize: 12 }} axisLine={false} tickLine={false} unit="%" />
-        <Tooltip content={<CustomTooltip />} />
-        <Area type="monotone" dataKey="theory" stroke={COLORS.theory} fill="url(#grad-theory)" strokeWidth={2} />
-        <Area type="monotone" dataKey="practice" stroke={COLORS.practice} fill="url(#grad-practice)" strokeWidth={2} />
-        <Area type="monotone" dataKey="lexicon" stroke={COLORS.lexicon} fill="url(#grad-lexicon)" strokeWidth={2} />
-      </AreaChart>
-    </ResponsiveContainer>
-    <div className="mt-4 flex justify-between gap-1 px-2">
-      {data.map((d) => {
-        const avg = Math.round((d.theory + d.practice + d.lexicon) / 3)
-        return (
-          <div key={d.day} className="flex-1 px-0.5">
-            <div
-              className="h-1.5 rounded-full"
-              style={{
-                background: `linear-gradient(90deg, #22c55e, #14b8a6, #3b82f6)`,
-                width: `${avg}%`,
-                margin: '0 auto',
-                maxWidth: '100%',
-              }}
-              title={`${avg}%`}
-            />
-          </div>
-        )
-      })}
+    <div>
+      <ResponsiveContainer width="100%" height={height}>
+        <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+          <defs>
+            {(['theory', 'practice', 'lexicon'] as const).map((key) => (
+              <linearGradient key={key} id={`grad-${key}`} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor={COLORS[key]} stopOpacity={0.5} />
+                <stop offset="100%" stopColor={COLORS[key]} stopOpacity={0} />
+              </linearGradient>
+            ))}
+          </defs>
+          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+          <XAxis dataKey="day" tick={{ fill: '#64748B', fontSize: 12 }} axisLine={false} tickLine={false} />
+          <YAxis domain={[0, 100]} tick={{ fill: '#64748B', fontSize: 12 }} axisLine={false} tickLine={false} unit="%" />
+          <Tooltip content={<CustomTooltip />} />
+          <Area type="monotone" dataKey="theory" stroke={COLORS.theory} fill="url(#grad-theory)" strokeWidth={2} />
+          <Area type="monotone" dataKey="practice" stroke={COLORS.practice} fill="url(#grad-practice)" strokeWidth={2} />
+          <Area type="monotone" dataKey="lexicon" stroke={COLORS.lexicon} fill="url(#grad-lexicon)" strokeWidth={2} />
+        </AreaChart>
+      </ResponsiveContainer>
+      <div className="mt-4 flex justify-between gap-1 px-2">
+        {data.map((d) => {
+          const avg = Math.round((d.theory + d.practice + d.lexicon) / 3)
+          return (
+            <div key={d.day} className="flex-1 px-0.5">
+              <div
+                className="h-1.5 rounded-full"
+                style={{
+                  background: `linear-gradient(90deg, #22c55e, #14b8a6, #3b82f6)`,
+                  width: `${avg}%`,
+                  margin: '0 auto',
+                  maxWidth: '100%',
+                }}
+                title={`${avg}%`}
+              />
+            </div>
+          )
+        })}
+      </div>
     </div>
-  </div>
   )
 }
 
-export function ProgressGraph() {
-  const { progress } = useUser()
+export function ProgressGraph() 
+{
   const [range, setRange] = useState<ProgressRange>('weekly')
   const [expanded, setExpanded] = useState(false)
+  const [rawData, setRawData] = useState(getLast7DaysProgress())
+
+  // Refresh graph every 30 seconds automatically
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setRawData(getLast7DaysProgress())
+    }, 30000)
+    return () => clearInterval(interval)
+  }, [])
+
+  // Also refresh when tab becomes visible again
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        setRawData(getLast7DaysProgress())
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibility)
+    return () => document.removeEventListener('visibilitychange', handleVisibility)
+  }, [])
 
   const data = useMemo(() => {
-    if (range === 'weekly') return progress
+    if (range === 'weekly') return rawData
     if (range === 'daily') {
-      const today = progress[new Date().getDay()] ?? progress[0]
+      const today = rawData[rawData.length - 1]
       return [{ ...today, day: 'Today' }]
     }
-    const months = ['W1', 'W2', 'W3', 'W4']
-    return months.map((day, i) => ({
+    // Monthly: show 4 weeks averaged
+    const weeks = ['W1', 'W2', 'W3', 'W4']
+    return weeks.map((day, i) => ({
       day,
-      theory: Math.min(100, progress[i % 7].theory + i * 5),
-      practice: Math.min(100, progress[(i + 1) % 7].practice + i * 3),
-      lexicon: Math.min(100, progress[(i + 2) % 7].lexicon + i * 2),
+      theory: rawData[i % 7]?.theory || 0,
+      practice: rawData[(i + 1) % 7]?.practice || 0,
+      lexicon: rawData[(i + 2) % 7]?.lexicon || 0,
     }))
-  }, [progress, range])
+  }, [rawData, range])
 
   return (
     <>
@@ -106,10 +127,7 @@ export function ProgressGraph() {
             <div className="flex flex-wrap gap-3 text-xs">
               {(['Theory', 'Practice', 'Lexicon'] as const).map((label, i) => (
                 <span key={label} className="flex items-center gap-1.5 text-muted">
-                  <span
-                    className="h-2 w-2 rounded-full"
-                    style={{ background: Object.values(COLORS)[i] }}
-                  />
+                  <span className="h-2 w-2 rounded-full" style={{ background: Object.values(COLORS)[i] }} />
                   {label}
                 </span>
               ))}
@@ -127,8 +145,9 @@ export function ProgressGraph() {
               type="button"
               onClick={() => setExpanded(true)}
               className="rounded-lg p-1.5 text-muted hover:bg-white/5 hover:text-app"
-              aria-label="Expand graph"
-            >
+            
+          >
+
               <Maximize2 size={18} />
             </button>
           </div>
@@ -152,11 +171,7 @@ export function ProgressGraph() {
               className="relative w-full max-w-5xl rounded-2xl border border-app bg-card p-6"
               onClick={(e) => e.stopPropagation()}
             >
-              <button
-                type="button"
-                onClick={() => setExpanded(false)}
-                className="absolute right-4 top-4 text-muted hover:text-app"
-              >
+              <button type="button" onClick={() => setExpanded(false)} className="absolute right-4 top-4 text-muted hover:text-app">
                 <X size={24} />
               </button>
               <h2 className="font-heading mb-4 text-xl font-semibold">Progress Graph</h2>
