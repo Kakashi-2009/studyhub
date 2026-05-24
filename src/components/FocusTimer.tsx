@@ -3,9 +3,9 @@ import { Clock, Settings } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useUser } from '../context/UserContext'
 import { useTimer } from '../hooks/useTimer'
-import { updateTodayProgress } from '../utils/progressStorage'
+
 export function FocusTimer() {
-  const { settings, setSettings, showToast } = useUser()
+  const { settings, setSettings, showToast, incrementPractice } = useUser()
   const focusSeconds = settings.timerFocus * 60
   const timer = useTimer(focusSeconds)
   const [showSettings, setShowSettings] = useState(false)
@@ -16,15 +16,15 @@ export function FocusTimer() {
 
   useEffect(() => {
     timer.setOnComplete(() => {
-     const ctx = new AudioContext()
-     const osc = ctx.createOscillator()
-     osc.type = 'sine'
-    osc.frequency.value = 880
-    osc.connect(ctx.destination)
-    osc.start()
-    setTimeout(() => osc.stop(), 600)
+      const ctx = new AudioContext()
+      const osc = ctx.createOscillator()
+      osc.type = 'sine'
+      osc.frequency.value = 880
+      osc.connect(ctx.destination)
+      osc.start()
+      setTimeout(() => osc.stop(), 600)
       showToast('🎉 Focus session complete! Take a break.')
-      updateTodayProgress('practice', 8)
+      incrementPractice(8)
       timer.reset(focusSeconds)
     })
   }, [focusSeconds])
