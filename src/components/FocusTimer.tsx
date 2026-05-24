@@ -151,11 +151,10 @@ export function FocusTimer() {
           {timer.formatTime()}
         </span>
         <motion.div
-          className="absolute h-3 w-3 rounded-full bg-white shadow-lg"
+          className="absolute h-3 w-3 rounded-full shadow-lg"
           style={{
-            left: size / 2 + r * Math.cos(timer.progress * 2 * Math.PI - Math.PI / 2) - 6,
-            top: size / 2 + r * Math.sin(timer.progress * 2 * Math.PI - Math.PI / 2) - 6,
-          }}
+          background: 'var(--accent)',
+           }} 
         />
       </div>
 
