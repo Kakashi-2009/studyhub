@@ -138,8 +138,8 @@ function TreeArt({
 
         {type === 'pine' && stage > 0 && !withered && (
           <>
-            <path d="M112 204 L112 142 C112 132 116 124 121 118 L128 204 Z" fill="#8b5e3c" />
-            <path d="M108 204 L108 136 C108 126 104 118 98 112 L92 204 Z" fill="#6b4226" />
+            {/* Single trunk only (no double trunk paths) */}
+            <rect x="108" y="190" width="24" height="50" fill="#6b4226" />
             <path d="M120 62 L92 90 L101 92 L80 116 L97 115 L72 140 L95 140 L64 166 L176 166 L145 140 L168 140 L143 115 L160 116 L139 92 L148 90 Z" fill="#1a3d2b" />
             <path d="M120 50 L96 78 L104 80 L86 102 L101 102 L80 124 L100 124 L75 144 L165 144 L140 124 L160 124 L139 102 L154 102 L136 80 L144 78 Z" fill="#2d6a4f" />
             <path d="M120 40 L100 64 L108 66 L92 86 L105 86 L88 104 L106 104 L84 120 L156 120 L134 104 L152 104 L135 86 L148 86 L132 66 L140 64 Z" fill="#40916c" />
