@@ -8,7 +8,7 @@ export function LexiconWidget() {
 
   const addWord = () => {
     if (!word.trim()) return
-    incrementLexicon(3)
+    incrementLexicon(10)
     setWord('')
   }
 

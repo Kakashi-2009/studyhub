@@ -27,7 +27,7 @@ export function FocusTimer() {
       incrementPractice(8)
       timer.reset(focusSeconds)
     })
-  }, [focusSeconds])
+  }, [focusSeconds, incrementPractice, showToast, timer])
 
   const size = 200
   const stroke = 10

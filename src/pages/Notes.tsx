@@ -12,6 +12,7 @@ export function Notes() {
   const { incrementTheory } = useUser()
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const editorRef = useRef<HTMLDivElement>(null)
+  const [noteContent, setNoteContent] = useState('')
 
   const active = notes.find((n) => n.id === activeId)
 
@@ -46,10 +47,9 @@ export function Notes() {
       if (saveTimer.current) clearTimeout(saveTimer.current)
       saveTimer.current = setTimeout(() => {
         updateNote(id, { content })
-        incrementTheory(2)
       }, 2000)
     },
-    [updateNote, incrementTheory]
+    [updateNote]
   )
 
   useEffect(() => {
@@ -57,8 +57,19 @@ export function Notes() {
       if (editorRef.current.innerHTML !== active.content) {
         editorRef.current.innerHTML = active.content
       }
+      setNoteContent(active.content.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim())
     }
   }, [activeId])
+
+  useEffect(() => {
+    if (!activeId) return
+    const timer = setTimeout(() => {
+      if (noteContent.trim().length > 50) {
+        incrementTheory(5)
+      }
+    }, 60000)
+    return () => clearTimeout(timer)
+  }, [activeId, incrementTheory, noteContent])
 
   const execCmd = (cmd: string, value?: string) => {
     document.execCommand(cmd, false, value)
@@ -143,7 +154,11 @@ export function Notes() {
                 contentEditable
                 suppressContentEditableWarning
                 className="flex-1 overflow-y-auto p-4 text-app outline-none"
-                onInput={() => activeId && debouncedSave(activeId, editorRef.current?.innerHTML ?? '')}
+                onInput={() => {
+                  const html = editorRef.current?.innerHTML ?? ''
+                  setNoteContent(html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim())
+                  if (activeId) debouncedSave(activeId, html)
+                }}
               />
             </>
           ) : (

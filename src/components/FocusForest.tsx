@@ -145,7 +145,7 @@ function TreeArt({
 }
 
 export function FocusForest() {
-  const { incrementPractice } = useUser()
+  const { incrementPractice, showToast } = useUser()
   const [forest, setForest] = useState<Tree[]>([])
   const [coins, setCoins] = useState(0)
   const [view, setView] = useState<ViewState>('idle')
@@ -176,6 +176,14 @@ export function FocusForest() {
   useEffect(() => {
     if (view !== 'running' || remaining > 0) return
     const reward = getCoinReward(sessionMinutes)
+    const practiceAmount =
+      sessionMinutes === 25
+        ? 10
+        : sessionMinutes === 45
+          ? 18
+          : sessionMinutes === 60
+            ? 25
+            : Math.max(1, Math.floor(sessionMinutes / 2.5))
     const completedTree: Tree = {
       id: crypto.randomUUID(),
       type: selectedTree,
@@ -187,7 +195,8 @@ export function FocusForest() {
     }
     addTree(completedTree)
     addCoins(reward)
-    incrementPractice(8)
+    incrementPractice(practiceAmount)
+    showToast(`🎉 Tree planted! +${reward} coins earned!`)
     setForest(getForest())
     setCoins(getCoins())
     setLastReward(reward)
@@ -211,7 +220,7 @@ export function FocusForest() {
       setRemaining(totalSeconds)
     }, 3000)
     return () => window.clearTimeout(completeTimeout)
-  }, [incrementPractice, remaining, selectedTree, sessionMinutes, tag, totalSeconds, view])
+  }, [incrementPractice, remaining, selectedTree, sessionMinutes, showToast, tag, totalSeconds, view])
 
   const startSession = () => {
     const duration = selectedDuration === -1 ? customDuration : selectedDuration
@@ -223,6 +232,7 @@ export function FocusForest() {
   const confirmGiveUp = () => {
     setShowGiveUpModal(false)
     setView('withered')
+    showToast('Session abandoned. Keep trying! 💪')
     const witherTimeout = window.setTimeout(() => {
       setView('idle')
       setRemaining(totalSeconds)

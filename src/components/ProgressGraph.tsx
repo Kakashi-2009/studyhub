@@ -10,7 +10,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import { getLast7DaysProgress } from '../utils/progressStorage'
+import { useUser } from '../context/UserContext'
 import type { ProgressRange } from '../types'
 
 const COLORS = { theory: '#4FACFE', practice: '#A855F7', lexicon: '#F472B6' }
@@ -79,28 +79,14 @@ function ChartBody({ data, height }: { data: { day: string; theory: number; prac
 
 export function ProgressGraph() 
 {
+  const { progress } = useUser()
   const [range, setRange] = useState<ProgressRange>('weekly')
   const [expanded, setExpanded] = useState(false)
-  const [rawData, setRawData] = useState(getLast7DaysProgress())
+  const rawData = progress
 
-  // Refresh graph every 30 seconds automatically
   useEffect(() => {
-    const interval = setInterval(() => {
-      setRawData(getLast7DaysProgress())
-    }, 30000)
-    return () => clearInterval(interval)
-  }, [])
-
-  // Also refresh when tab becomes visible again
-  useEffect(() => {
-    const handleVisibility = () => {
-      if (document.visibilityState === 'visible') {
-        setRawData(getLast7DaysProgress())
-      }
-    }
-    document.addEventListener('visibilitychange', handleVisibility)
-    return () => document.removeEventListener('visibilitychange', handleVisibility)
-  }, [])
+    // Graph updates reactively because progress comes from UserContext.
+  }, [progress])
 
   const data = useMemo(() => {
     if (range === 'weekly') return rawData
