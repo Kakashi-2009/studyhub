@@ -96,6 +96,12 @@ function TreeArt({
           : type === 'jacaranda'
             ? '#a78bfa'
             : '#22c55e'
+  const svgSpec =
+    type === 'pine'
+      ? { viewBox: '0 0 100 120', transform: 'translate(-0.4 0) scale(0.42 0.5)' }
+      : type === 'palm'
+        ? { viewBox: '0 0 100 130', transform: 'translate(-0.4 0) scale(0.42 0.54)' }
+        : { viewBox: '0 0 120 120', transform: 'scale(0.5 0.5)' }
 
   return (
     <motion.div
@@ -113,7 +119,14 @@ function TreeArt({
       }}
       style={{ filter: celebration ? `${baseFilter} brightness(1.1)` : baseFilter }}
     >
-      <svg width={variant === 'mini' ? 120 : 240} height={variant === 'mini' ? 120 : 240} viewBox="0 0 240 240" aria-label="Tree">
+      <svg
+        width="100%"
+        height="100%"
+        viewBox={svgSpec.viewBox}
+        preserveAspectRatio="xMidYMid meet"
+        aria-label="Tree"
+      >
+        <g transform={svgSpec.transform}>
         <ellipse cx="120" cy="210" rx="64" ry="12" fill={type === 'cherry' ? '#ff85a133' : '#00000020'} />
 
         {stage === 0 && !withered && (
@@ -349,6 +362,7 @@ function TreeArt({
             ))}
           </>
         )}
+        </g>
       </svg>
 
       {celebration && (
@@ -611,6 +625,18 @@ export function FocusForest() {
         .ff-coin-float {
           animation: ffCoinFloat 1.4s ease-out forwards;
         }
+        .ff-select-grid {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 12px;
+          justify-items: center;
+        }
+        @media (min-width: 768px) {
+          .ff-select-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        }
+        @media (min-width: 1280px) {
+          .ff-select-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+        }
       `}</style>
 
       <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
@@ -626,32 +652,34 @@ export function FocusForest() {
       <AnimatePresence mode="wait">
         {view === 'idle' && (
           <motion.div key="idle" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-            <div className="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+            <div className="ff-select-grid mb-4">
               {TREE_OPTIONS.map((option) => (
                 <button
                   key={option.type}
                   type="button"
                   onClick={() => setSelectedTree(option.type)}
-                  className={`rounded-xl border px-3 py-3 text-left transition duration-200 hover:-translate-y-1 ${
-                    selectedTree === option.type ? 'scale-105' : 'border-app'
+                  className={`relative flex w-full max-w-[180px] cursor-pointer select-none flex-col items-center justify-between rounded-2xl border-2 p-4 transition-all duration-200 ${
+                    selectedTree === option.type
+                      ? 'scale-105 border-[var(--accent)] shadow-lg'
+                      : 'border-white/10 hover:scale-[1.02] hover:border-white/30'
                   }`}
                   style={{
-                    borderColor: selectedTree === option.type ? option.color : undefined,
-                    boxShadow: selectedTree === option.type ? `0 0 20px ${option.color}66` : undefined,
                     background:
                       option.type === 'pine'
-                        ? 'linear-gradient(180deg, rgba(26,61,43,0.35), rgba(45,106,79,0.12))'
+                        ? 'linear-gradient(135deg, #0f2d1a, #1a4a2e)'
                         : option.type === 'cherry'
-                          ? 'linear-gradient(180deg, rgba(255,183,197,0.30), rgba(255,77,109,0.10))'
+                          ? 'linear-gradient(135deg, #2d0f1a, #4a1a2e)'
                           : option.type === 'maple'
-                            ? 'linear-gradient(180deg, rgba(234,88,12,0.30), rgba(202,138,4,0.10))'
+                            ? 'linear-gradient(135deg, #2d1a0f, #4a2e1a)'
                             : option.type === 'jacaranda'
-                              ? 'linear-gradient(180deg, rgba(139,92,246,0.32), rgba(124,58,237,0.10))'
-                              : 'linear-gradient(180deg, rgba(34,197,94,0.30), rgba(20,184,166,0.10))',
+                              ? 'linear-gradient(135deg, #1a0f2d, #2e1a4a)'
+                              : 'linear-gradient(135deg, #0f2d2a, #1a4a44)',
+                    minHeight: '200px',
+                    width: '100%',
                   }}
                 >
-                  <div className="mb-1 flex justify-center">
-                    <div className="h-20 w-20">
+                  <div className="flex w-full items-center justify-center overflow-hidden" style={{ height: '130px' }}>
+                    <div className="h-full w-full">
                       <TreeArt
                         type={option.type}
                         totalSeconds={1}
@@ -661,7 +689,14 @@ export function FocusForest() {
                       />
                     </div>
                   </div>
-                  <p className="text-sm font-semibold text-app text-center">{option.label}</p>
+                  <span className="mt-2 p-0 text-center text-[13px] font-semibold leading-tight text-white/90">
+                    {option.label}
+                  </span>
+                  {selectedTree === option.type && (
+                    <div className="absolute top-2 right-2 flex h-5 w-5 items-center justify-center rounded-full bg-[var(--accent)]">
+                      <span className="text-xs text-white">✓</span>
+                    </div>
+                  )}
                 </button>
               ))}
             </div>
@@ -724,7 +759,7 @@ export function FocusForest() {
         {view === 'running' && (
           <motion.div key="running" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
             <div className="flex flex-col items-center">
-              <div className="relative mb-2 h-[260px] w-[260px]">
+              <div className="relative mb-2 h-[280px] w-[280px] overflow-hidden">
                 <svg width="260" height="260" className="absolute left-0 top-0 -rotate-90">
                   <circle cx="130" cy="130" r="118" stroke="rgba(255,255,255,0.1)" strokeWidth="10" fill="none" />
                   <circle
@@ -740,7 +775,7 @@ export function FocusForest() {
                     strokeLinecap="round"
                   />
                 </svg>
-                <div className="absolute inset-0 grid place-items-center">
+                <div className="absolute inset-0 flex items-center justify-center">
                   <TreeArt type={selectedTree} totalSeconds={totalSeconds} secondsLeft={remaining} />
                 </div>
               </div>
@@ -813,20 +848,32 @@ export function FocusForest() {
                 <div
                   key={tree.id}
                   title={`${option?.label} • ${tree.duration} min • ${tree.tag} • ${new Date(tree.completedAt).toLocaleString()} • +${tree.coins} coins`}
-                  className={`rounded-xl border border-app p-3 text-center transition-transform duration-200 hover:-translate-y-1 ${
+                  className={`mx-auto flex h-[180px] w-[160px] flex-col overflow-hidden rounded-xl border border-app p-3 text-center transition-transform duration-200 hover:-translate-y-1 ${
                     tree.type === 'pine'
-                      ? 'bg-[#1a3d2b22] hover:shadow-[0_0_16px_rgba(82,183,136,0.45)]'
+                      ? 'hover:shadow-[0_0_16px_rgba(82,183,136,0.45)]'
                       : tree.type === 'cherry'
-                        ? 'bg-[#ff85a11f] hover:shadow-[0_0_16px_rgba(255,133,161,0.45)]'
+                        ? 'hover:shadow-[0_0_16px_rgba(255,133,161,0.45)]'
                         : tree.type === 'maple'
-                          ? 'bg-[#ea580c1f] hover:shadow-[0_0_16px_rgba(249,115,22,0.45)]'
+                          ? 'hover:shadow-[0_0_16px_rgba(249,115,22,0.45)]'
                           : tree.type === 'jacaranda'
-                            ? 'bg-[#8b5cf61f] hover:shadow-[0_0_16px_rgba(139,92,246,0.45)]'
-                            : 'bg-[#22c55e1f] hover:shadow-[0_0_16px_rgba(34,197,94,0.45)]'
+                            ? 'hover:shadow-[0_0_16px_rgba(139,92,246,0.45)]'
+                            : 'hover:shadow-[0_0_16px_rgba(34,197,94,0.45)]'
                   }`}
+                  style={{
+                    background:
+                      tree.type === 'pine'
+                        ? 'linear-gradient(135deg, #0f2d1a, #1a4a2e)'
+                        : tree.type === 'cherry'
+                          ? 'linear-gradient(135deg, #2d0f1a, #4a1a2e)'
+                          : tree.type === 'maple'
+                            ? 'linear-gradient(135deg, #2d1a0f, #4a2e1a)'
+                            : tree.type === 'jacaranda'
+                              ? 'linear-gradient(135deg, #1a0f2d, #2e1a4a)'
+                              : 'linear-gradient(135deg, #0f2d2a, #1a4a44)',
+                  }}
                 >
-                  <div className="mb-1 flex justify-center">
-                    <div className="h-16 w-16">
+                  <div className="flex h-[108px] w-full items-center justify-center overflow-hidden">
+                    <div className="h-full w-full">
                       <TreeArt
                         type={tree.type}
                         totalSeconds={1}
@@ -836,9 +883,12 @@ export function FocusForest() {
                       />
                     </div>
                   </div>
-                  <p className="mt-1 text-xs text-app">{tree.duration} min</p>
-                  <p className="text-[11px] text-muted">{tree.tag}</p>
-                  <p className="text-[11px] text-muted">{formatDate(tree.completedAt)}</p>
+                  <div className="mt-1 flex flex-1 flex-col items-center justify-center">
+                    <p className="text-xs text-app">{option?.label}</p>
+                    <p className="text-xs text-app">{tree.duration} min</p>
+                    <p className="text-xs text-muted">{tree.tag}</p>
+                    <p className="text-xs text-muted">{formatDate(tree.completedAt)}</p>
+                  </div>
                 </div>
               )
             })}
