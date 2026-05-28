@@ -1,3 +1,4 @@
+import { FocusForest } from '../components/FocusForest'
 import { FocusTimer } from '../components/FocusTimer'
 import { Header } from '../components/Header'
 import { HomeworkCard } from '../components/HomeworkCard'
@@ -23,6 +24,9 @@ export function Dashboard() {
         <div className="min-h-[360px] lg:col-span-1">
           <QuoteCard />
         </div>
+      </div>
+      <div className="mt-6">
+        <FocusForest />
       </div>
     </div>
   )

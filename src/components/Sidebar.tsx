@@ -9,6 +9,7 @@ import {
   NotepadText,
   Sparkles,
   Sun,
+  TreePine,
 } from 'lucide-react'
 import { useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
@@ -23,6 +24,7 @@ const NAV = [
   { to: '/notes', label: 'Notes', icon: NotepadText },
   { to: '/skills', label: 'Skills', icon: Sparkles },
   { to: '#calculator', label: 'Calculator', icon: Calculator, action: 'calculator' as const },
+  { to: '/forest', label: 'Focus Forest', icon: TreePine },
 ]
 
 export function Sidebar() {

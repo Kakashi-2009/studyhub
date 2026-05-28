@@ -11,6 +11,7 @@ import { UserProvider, useUser } from './context/UserContext'
 import { Bookmarks } from './pages/Bookmarks'
 import { Dashboard } from './pages/Dashboard'
 import { Files } from './pages/Files'
+import { FocusForest } from './pages/FocusForest'
 import { Notes } from './pages/Notes'
 import { Skills } from './pages/Skills'
 
@@ -58,6 +59,7 @@ function AppRoutes() {
           <Route path="/" element={<Dashboard />} />
           <Route path="/bookmarks" element={<Bookmarks />} />
           <Route path="/files" element={<Files />} />
+          <Route path="/forest" element={<FocusForest />} />
           <Route path="/notes" element={<Notes />} />
           <Route path="/skills" element={<Skills />} />
         </Routes>
