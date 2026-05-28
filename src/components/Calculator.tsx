@@ -5,23 +5,24 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useUser } from '../context/UserContext'
 
 const math = create(all)
+math.import(
+  {
+    sind: (x: number) => Math.sin((x * Math.PI) / 180),
+    cosd: (x: number) => Math.cos((x * Math.PI) / 180),
+    tand: (x: number) => Math.tan((x * Math.PI) / 180),
+    asind: (x: number) => (Math.asin(x) * 180) / Math.PI,
+    acosd: (x: number) => (Math.acos(x) * 180) / Math.PI,
+    atand: (x: number) => (Math.atan(x) * 180) / Math.PI,
+  },
+  { override: true }
+)
 
 type Tab = 'standard' | 'scientific'
 
 type HistoryEntry = { expr: string; result: string }
 
-function toRad(expr: string, deg: boolean): string {
-  if (!deg) return expr
-  return expr
-    .replace(/\bsin\(/g, 'sin(deg2rad(')
-    .replace(/\bcos\(/g, 'cos(deg2rad(')
-    .replace(/\btan\(/g, 'tan(deg2rad(')
-    .replace(/\basin\(/g, 'rad2deg(asin(')
-    .replace(/\bacos\(/g, 'rad2deg(acos(')
-    .replace(/\batan\(/g, 'rad2deg(atan(')
-}
-
 function preprocess(expr: string, deg: boolean): string {
+  const hasExplicitDegree = /(?:\d+(?:\.\d+)?|\.\d+)°/.test(expr)
   let e = expr
     .replace(/×/g, '*')
     .replace(/÷/g, '/')
@@ -45,9 +46,20 @@ function preprocess(expr: string, deg: boolean): string {
     .replace(/x²/g, '^2')
     .replace(/x³/g, '^3')
     .replace(/1\/x/g, '1/(')
-  if (deg) {
-    math.import({ deg2rad: (x: number) => (x * Math.PI) / 180, rad2deg: (x: number) => (x * 180) / Math.PI }, { override: true })
-    e = toRad(e, true)
+    .replace(/(\d+(?:\.\d+)?|\.\d+)°/g, '($1*pi/180)')
+  if (deg && !hasExplicitDegree) {
+    e = e
+      .replace(/\bsin\(/g, 'sind(')
+      .replace(/\bcos\(/g, 'cosd(')
+      .replace(/\btan\(/g, 'tand(')
+      .replace(/\basin\(/g, 'asind(')
+      .replace(/\bacos\(/g, 'acosd(')
+      .replace(/\batan\(/g, 'atand(')
+  } else if (hasExplicitDegree) {
+    e = e
+      .replace(/\bsin\(/g, 'sin(')
+      .replace(/\bcos\(/g, 'cos(')
+      .replace(/\btan\(/g, 'tan(')
   }
   return e
 }
@@ -117,16 +129,9 @@ export function Calculator() {
       return
     }
     if (key === '°') {
-  setExpression((e) => {
-    const num = parseFloat(e)
-    if (!isNaN(num)) {
-      const rad = (num * Math.PI) / 180
-      return String(rad)
+      setExpression((e) => e + '°')
+      return
     }
-    return e
-  })
-  return
-}
     setExpression((e) => e + key)
   }
 
