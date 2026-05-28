@@ -1,6 +1,6 @@
 export interface Tree {
   id: string
-  type: 'pine' | 'cherry' | 'palm' | 'maple' | 'bamboo'
+  type: 'pine' | 'cherry' | 'palm' | 'maple' | 'jacaranda'
   duration: number
   completedAt: string
   tag: string
