@@ -7,11 +7,13 @@ export type DayData = {
 
 export type HomeworkTask = {
   id: string
-  name: string
+  text: string
+  name?: string
   subject: string
   color: string
   completed: boolean
-  notes: string
+  createdAt: string
+  notes?: string
 }
 
 export type AuthProvider = 'google' | 'email'

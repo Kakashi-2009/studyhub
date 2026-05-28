@@ -1,10 +1,33 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { ChevronDown, ChevronRight, ClipboardList, Plus } from 'lucide-react'
+import { ChevronDown, ChevronRight, ClipboardList, Plus, RotateCcw, Trash2 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { STORAGE_KEYS, SUBJECT_COLORS, type HomeworkTask } from '../types'
 import { useLocalStorage } from '../hooks/useLocalStorage'
+import { useUser } from '../context/UserContext'
 
 const SUBJECTS = ['Math', 'Science', 'History', 'English', 'Physics', 'Other']
+const HOMEWORK_DATE_KEY = 'studyhub_homework_date'
+const ONE_DAY_MS = 24 * 60 * 60 * 1000
+
+function getTaskText(task: HomeworkTask) {
+  return task.text || task.name || ''
+}
+
+function saveHomeworkDate() {
+  localStorage.setItem(HOMEWORK_DATE_KEY, new Date().toISOString())
+}
+
+function shouldResetHomework(lastDate: string | null) {
+  if (!lastDate) return false
+  const lastTime = new Date(lastDate).getTime()
+  const now = new Date()
+
+  if (Number.isNaN(lastTime)) {
+    return lastDate !== now.toDateString()
+  }
+
+  return now.getTime() - lastTime >= ONE_DAY_MS || new Date(lastTime).toDateString() !== now.toDateString()
+}
 
 function TaskName({ name }: { name: string }) {
   const ref = useRef<HTMLSpanElement>(null)
@@ -25,8 +48,10 @@ function TaskName({ name }: { name: string }) {
 }
 
 export function HomeworkCard() {
+  const { showToast } = useUser()
   const [tasks, setTasks] = useLocalStorage<HomeworkTask[]>(STORAGE_KEYS.homework, [])
   const [showForm, setShowForm] = useState(false)
+  const [showResetConfirm, setShowResetConfirm] = useState(false)
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [completedOpen, setCompletedOpen] = useState(false)
   const [name, setName] = useState('')
@@ -40,12 +65,14 @@ export function HomeworkCard() {
     if (!name.trim()) return
     const task: HomeworkTask = {
       id: crypto.randomUUID(),
-      name: name.trim(),
+      text: name.trim(),
       subject,
       color: SUBJECT_COLORS[subject] ?? '#94A3B8',
       completed: false,
+      createdAt: new Date().toISOString(),
       notes: '',
     }
+    if (!localStorage.getItem(HOMEWORK_DATE_KEY)) saveHomeworkDate()
     setTasks((prev) => [task, ...prev])
     setName('')
     setShowForm(false)
@@ -61,6 +88,37 @@ export function HomeworkCard() {
     setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, notes } : t)))
   }
 
+  const deleteTask = (id: string) => {
+    setTasks((prev) => prev.filter((t) => t.id !== id))
+    if (expandedId === id) setExpandedId(null)
+  }
+
+  const resetHomework = () => {
+    localStorage.removeItem(STORAGE_KEYS.homework)
+    saveHomeworkDate()
+    setTasks([])
+    setExpandedId(null)
+    setCompletedOpen(false)
+    setShowResetConfirm(false)
+    showToast('✅ Homework cleared!')
+  }
+
+  useEffect(() => {
+    const lastDate = localStorage.getItem(HOMEWORK_DATE_KEY)
+
+    if (shouldResetHomework(lastDate)) {
+      localStorage.removeItem(STORAGE_KEYS.homework)
+      saveHomeworkDate()
+      setTasks([])
+      setExpandedId(null)
+      setCompletedOpen(false)
+      showToast('📋 Homework reset for a new day!')
+      return
+    }
+
+    if (!lastDate && tasks.length > 0) saveHomeworkDate()
+  }, [setTasks, showToast, tasks.length])
+
   useEffect(() => {
     if (showForm) inputRef.current?.focus()
   }, [showForm])
@@ -72,14 +130,64 @@ export function HomeworkCard() {
           <ClipboardList size={20} className="text-[var(--accent)]" />
           Homework
         </h2>
-        <button
-          type="button"
-          onClick={() => setShowForm(!showForm)}
-          className="rounded-lg p-1.5 text-muted hover:bg-white/5 hover:text-[var(--accent)]"
-        >
-          <Plus size={20} />
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => setShowResetConfirm(true)}
+            aria-label="Reset homework"
+            className="rounded-lg p-1.5 text-muted hover:bg-white/5 hover:text-app"
+          >
+            <RotateCcw size={18} />
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowForm(!showForm)}
+            aria-label="Add homework"
+            className="rounded-lg p-1.5 text-muted hover:bg-white/5 hover:text-[var(--accent)]"
+          >
+            <Plus size={20} />
+          </button>
+        </div>
       </div>
+
+      <AnimatePresence>
+        {showResetConfirm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[80] flex items-center justify-center bg-black/60 px-4"
+            onClick={() => setShowResetConfirm(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.92, y: 12 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.92, y: 12 }}
+              className="w-full max-w-sm rounded-2xl border border-app bg-card p-5 shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h3 className="mb-2 font-heading text-lg font-semibold text-app">Reset all homework?</h3>
+              <p className="mb-5 text-sm text-muted">This will clear all tasks.</p>
+              <div className="flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowResetConfirm(false)}
+                  className="rounded-lg px-4 py-2 text-sm text-muted hover:bg-white/5 hover:text-app"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={resetHomework}
+                  className="rounded-lg bg-red-500/20 px-4 py-2 text-sm font-medium text-red-300 hover:bg-red-500/30"
+                >
+                  Reset
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <AnimatePresence>
         {showForm && (
@@ -126,7 +234,8 @@ export function HomeworkCard() {
             layout
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
-            className="rounded-xl border border-transparent hover:border-app"
+            exit={{ opacity: 0, x: 16 }}
+            className="group rounded-xl border border-transparent hover:border-app"
           >
             <div className="flex items-center gap-2 px-2 py-2">
               <input
@@ -141,8 +250,17 @@ export function HomeworkCard() {
                 className="flex flex-1 items-center gap-2 text-left"
                 onClick={() => setExpandedId(expandedId === task.id ? null : task.id)}
               >
-                <TaskName name={task.name} />
+                <TaskName name={getTaskText(task)} />
               </button>
+              <motion.button
+                type="button"
+                whileTap={{ scale: 0.9 }}
+                onClick={() => deleteTask(task.id)}
+                aria-label="Delete homework task"
+                className="rounded-lg p-1 text-red-400 opacity-0 transition hover:bg-red-500/10 hover:text-red-300 group-hover:opacity-100 focus:opacity-100"
+              >
+                <Trash2 size={15} />
+              </motion.button>
               <button
                 type="button"
                 onClick={() => setExpandedId(expandedId === task.id ? null : task.id)}
@@ -160,7 +278,7 @@ export function HomeworkCard() {
                   className="px-4 pb-3"
                 >
                   <textarea
-                    value={task.notes}
+                    value={task.notes ?? ''}
                     onChange={(e) => updateNotes(task.id, e.target.value)}
                     placeholder="Add notes..."
                     rows={3}
@@ -190,7 +308,8 @@ export function HomeworkCard() {
                   key={task.id}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="flex items-center gap-2 px-2 py-2 opacity-60"
+                  exit={{ opacity: 0, x: 16 }}
+                  className="group flex items-center gap-2 px-2 py-2 opacity-60"
                 >
                   <input
                     type="checkbox"
@@ -198,7 +317,16 @@ export function HomeworkCard() {
                     onChange={() => toggleComplete(task.id)}
                     className="accent-[var(--accent)]"
                   />
-                  <span className="line-through text-sm text-muted">{task.name}</span>
+                  <span className="min-w-0 flex-1 truncate text-sm text-muted line-through">{getTaskText(task)}</span>
+                  <motion.button
+                    type="button"
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => deleteTask(task.id)}
+                    aria-label="Delete homework task"
+                    className="rounded-lg p-1 text-red-400 opacity-0 transition hover:bg-red-500/10 hover:text-red-300 group-hover:opacity-100 focus:opacity-100"
+                  >
+                    <Trash2 size={15} />
+                  </motion.button>
                 </motion.div>
               ))}
           </AnimatePresence>
